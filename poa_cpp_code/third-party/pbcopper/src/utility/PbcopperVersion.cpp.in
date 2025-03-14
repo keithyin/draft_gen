@@ -1,0 +1,22 @@
+// Author: Armin Töpfer
+
+#include <pbcopper/utility/PbcopperVersion.h>
+#include <string>
+#include <tuple>
+
+namespace PacBio {
+namespace Utility {
+namespace {
+static constexpr const char LibraryVersion[] = "@pbcopper_VERSION@";
+static constexpr const int LibraryMajor      = @pbcopper_VERSION_MAJOR@;
+static constexpr const int LibraryMinor      = @pbcopper_VERSION_MINOR@;
+static constexpr const int LibraryPatch      = @pbcopper_VERSION_PATCH@;
+}
+
+std::string LibraryVersionString()
+{ return LibraryVersion; }
+
+std::tuple<int, int, int> LibraryVersionTriple()
+{ return std::make_tuple(LibraryMajor, LibraryMinor, LibraryPatch); }
+
+}}  // ::PacBio::Utility

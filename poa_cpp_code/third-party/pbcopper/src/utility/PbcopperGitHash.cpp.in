@@ -1,0 +1,15 @@
+// Author: Armin Töpfer
+
+#include <pbcopper/utility/PbcopperVersion.h>
+#include <string>
+
+namespace PacBio {
+namespace Utility {
+namespace {
+static constexpr const char LibraryGitSha1[] = "@COPPER_GIT_SHA1@";
+}
+
+std::string LibraryGitSha1String()
+{ return LibraryGitSha1; }
+
+}}  // ::PacBio::Utility

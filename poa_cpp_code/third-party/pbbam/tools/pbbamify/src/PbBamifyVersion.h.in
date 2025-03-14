@@ -1,0 +1,18 @@
+// Author: Ivan Sovic
+
+#ifndef PBBAMIFYVERSION_H
+#define PBBAMIFYVERSION_H
+
+#include <string>
+
+namespace PacBio {
+namespace BAM {
+namespace pbbamify {
+
+const std::string Version = std::string("@PbBamify_VERSION@");
+
+} // namespace pbbamify
+} // namespace BAM
+} // namespace PacBio
+
+#endif // PBBAMIFYVERSION_H

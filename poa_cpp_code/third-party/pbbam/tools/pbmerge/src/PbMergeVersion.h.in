@@ -1,0 +1,14 @@
+// Author: Derek Barnett
+
+#ifndef PBMERGEVERSION_H
+#define PBMERGEVERSION_H
+
+#include <string>
+
+namespace pbmerge {
+
+const std::string Version = std::string("@PbMerge_VERSION@");
+
+} // namespace pbmerge
+
+#endif // PBMERGEVERSION_H

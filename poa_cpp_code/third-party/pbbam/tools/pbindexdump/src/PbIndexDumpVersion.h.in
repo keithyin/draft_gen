@@ -1,0 +1,14 @@
+// Author: Derek Barnett
+
+#ifndef PBINDEXDUMPVERSION_H
+#define PBINDEXDUMPVERSION_H
+
+#include <string>
+
+namespace pbindexdump {
+
+const std::string Version = std::string("@PbIndexDump_VERSION@");
+
+} // namespace pbindexdump
+
+#endif // PBINDEXDUMPVERSION_H

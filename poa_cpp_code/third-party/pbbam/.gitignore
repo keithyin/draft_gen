@@ -1,0 +1,19 @@
+*.o
+*.pico
+*.so
+*.a
+*.dylib
+*.pyc
+*~
+CMakeLists.txt.user
+bin/
+build/
+docs/Doxyfile
+lib/
+tests/bin/test_pbbam
+tests/data/test_group_query/group.fofn
+tests/src/TestData.h
+
+# Meson WrapDB stuff
+subprojects/packagecache/
+subprojects/googletest*

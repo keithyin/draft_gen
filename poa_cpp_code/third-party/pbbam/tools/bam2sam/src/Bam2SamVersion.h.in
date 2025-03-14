@@ -1,0 +1,14 @@
+// Author: Derek Barnett
+
+#ifndef BAM2SAMVERSION_H
+#define BAM2SAMVERSION_H
+
+#include <string>
+
+namespace bam2sam {
+
+const std::string Version = std::string("@Bam2Sam_VERSION@");
+
+} // namespace bam2sam
+
+#endif // BAM2SAMVERSION_H
