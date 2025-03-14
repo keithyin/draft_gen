@@ -1,5 +1,4 @@
 use std::ffi::{c_char, c_float, c_int, CStr, CString};
-use std::ptr;
 
 pub trait TSubread {
     fn get_seq(&self) -> &str;
