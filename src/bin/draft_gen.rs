@@ -14,6 +14,7 @@ use gskits::{
     utils::ScopedTimer,
 };
 use num_cpus;
+use rsedlib::{edlib_align, utils::reverse_complement};
 use rust_htslib::bam::{self, header::HeaderRecord, Header, Read, Reader, Record, Records, Writer};
 
 #[derive(Debug, Parser, Clone)]
@@ -27,6 +28,9 @@ pub struct Cli {
 
     #[arg(short = 'n')]
     first_n_channels: Option<usize>,
+
+    #[arg(long = "ed-unify-strand")]
+    ed_unify_strand: bool,
 
     #[arg(long = "minPasses", default_value_t = 3)]
     min_passes: usize,
@@ -98,7 +102,7 @@ impl From<Vec<Subread>> for ChannelSubreads {
 struct ConsensusResult {
     channel_id: u32,
     consensus_str: String,
-    num_passes: usize
+    num_passes: usize,
 }
 
 impl ConsensusResult {
@@ -106,7 +110,7 @@ impl ConsensusResult {
         Self {
             channel_id,
             consensus_str,
-            num_passes: num_passes
+            num_passes: num_passes,
         }
     }
 }
@@ -221,7 +225,6 @@ fn consensus_worker(
 ) {
     let mut scoped_timer = ScopedTimer::new();
     let mut instant = Instant::now();
-    
 
     // let ab = unsafe { abpoa_init() };
     for channel_subreads in recv {
@@ -248,15 +251,18 @@ fn consensus_worker(
     }
 }
 
-fn consensus_core(
-    cli: &Cli,
-    mut channel_subreads: ChannelSubreads,
-) -> Option<ConsensusResult> {
+fn consensus_core(cli: &Cli, mut channel_subreads: ChannelSubreads) -> Option<ConsensusResult> {
     channel_subreads = filter_and_sort_subreads(channel_subreads);
+    if cli.ed_unify_strand {
+        unify_strand(&mut channel_subreads);
+    }
     let num_passes = channel_subreads.num_passes();
-    let setting = Setting::default();
-    let (consensus_seq, num_passes) = if num_passes >= cli.min_passes {
+    let mut setting = Setting::default();
+    if cli.ed_unify_strand {
+        setting.set_adjust_strand(false);
+    }
 
+    let (consensus_seq, num_passes) = if num_passes >= cli.min_passes {
         let msa_result = poa_consensus(&channel_subreads, &setting);
         msa_result
     } else {
@@ -267,7 +273,8 @@ fn consensus_core(
         }
     };
 
-    let consensus_res = ConsensusResult::new(channel_subreads[0].channel, consensus_seq, num_passes);
+    let consensus_res =
+        ConsensusResult::new(channel_subreads[0].channel, consensus_seq, num_passes);
     return Some(consensus_res);
 }
 
@@ -325,8 +332,15 @@ fn consensus_writer_core(
         consensus_res.consensus_str.as_bytes(),
         &vec![255; consensus_res.consensus_str.len()],
     );
-    record.push_aux(b"ch", bam::record::Aux::U32(consensus_res.channel_id)).unwrap();
-    record.push_aux(b"np", bam::record::Aux::U32(consensus_res.num_passes as u32)).unwrap();
+    record
+        .push_aux(b"ch", bam::record::Aux::U32(consensus_res.channel_id))
+        .unwrap();
+    record
+        .push_aux(
+            b"np",
+            bam::record::Aux::U32(consensus_res.num_passes as u32),
+        )
+        .unwrap();
     let _ = bam_writer.write(&record)?;
     Ok(())
 }
@@ -363,6 +377,30 @@ fn filter_and_sort_subreads(channel_subreads: ChannelSubreads) -> ChannelSubread
     });
 
     filtered_subreads.into()
+}
+
+fn unify_strand(channel_subreads: &mut ChannelSubreads) {
+    for idx in 1..channel_subreads.len() {
+        let anchor = &channel_subreads[0];
+        let cur_sbr = &channel_subreads[idx];
+        let rc = reverse_complement(cur_sbr.seq.as_bytes());
+        let edlib_param = rsedlib::param::EdlibAlignParam::default();
+        let res1 = edlib_align(cur_sbr.seq.as_bytes(), anchor.seq.as_bytes(), &edlib_param);
+        let res2 = edlib_align(&rc, anchor.seq.as_bytes(), &edlib_param);
+
+        match (res1, res2) {
+            (Ok(res1), Ok(res2)) => {
+                if res1.edit_distance > res2.edit_distance {
+                    channel_subreads[idx].seq = unsafe { String::from_utf8_unchecked(rc) };
+                }
+            }
+
+            (Err(_), Ok(_)) => {
+                channel_subreads[idx].seq = unsafe { String::from_utf8_unchecked(rc) };
+            }
+            _ => {}
+        }
+    }
 }
 
 fn single_thread(cli: &Cli, oup_bam: &str) {

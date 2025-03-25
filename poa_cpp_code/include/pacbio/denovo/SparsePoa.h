@@ -10,121 +10,121 @@
 
 #include <pacbio/data/Interval.h>
 
-namespace PacBio {
-
-// fwd decls
-namespace Consensus {
-class ScoredMutation;
-}  // namespace Consensus
-
-namespace Poa {
-// fwd decls
-class PoaGraph;
-
-using Interval = PacBio::Data::Interval;
-using PoaGraph = PacBio::Poa::PoaGraph;
-
-class SdpRangeFinder : public PacBio::Poa::detail::SdpRangeFinder
+namespace PacBio
 {
-protected:
-    virtual PacBio::Poa::detail::SdpAnchorVector FindAnchors(
-        const std::string& consensusSequence, const std::string& readSequence) const final;
-};
 
-//
-// Details of how a read aligns to the POA graph
-//
-struct PoaAlignmentSummary
-{
-    bool ReverseComplementedRead;
-    Interval ExtentOnRead;
-    Interval ExtentOnConsensus;
-    float AlignmentScore;
-    float AlignmentIdentity;
-
-    PoaAlignmentSummary()
-        : ReverseComplementedRead{false}
-        , ExtentOnRead(0, 0)
-        , ExtentOnConsensus(0, 0)
-        , AlignmentScore{0}
-        , AlignmentIdentity{0}
+    // fwd decls
+    namespace Consensus
     {
-    }
-};
+        class ScoredMutation;
+    } // namespace Consensus
 
-struct PoaAlignmentOptions
-{
-    bool ClipBegin;
-    bool ClipEnd;
-};
+    namespace Poa
+    {
+        // fwd decls
+        class PoaGraph;
 
-//
-// Partial order aligner with parsimonious memory usage
-//
-class SparsePoa
-{
-public:
-    // ReadKey: Integer key representing
-    //  >= 0: a read in the POA graph
-    //    -1: read could not be inserted into POA graph
-    using ReadKey = int;
+        using Interval = PacBio::Data::Interval;
+        using PoaGraph = PacBio::Poa::PoaGraph;
 
-public:
-    SparsePoa();
-    ~SparsePoa();
+        class SdpRangeFinder : public PacBio::Poa::detail::SdpRangeFinder
+        {
+        protected:
+            virtual PacBio::Poa::detail::SdpAnchorVector FindAnchors(
+                const std::string &consensusSequence, const std::string &readSequence) const final;
+        };
 
-    //
-    // Add read, which must already have been oriented to be in the
-    // "forward" convention
-    //
-    ReadKey AddRead(const std::string& readSequence,
-                    const PoaAlignmentOptions& alnOptions = PoaAlignmentOptions(),
-                    float minScoreToAdd = 0);
+        //
+        // Details of how a read aligns to the POA graph
+        //
+        struct PoaAlignmentSummary
+        {
+            bool ReverseComplementedRead;
+            Interval ExtentOnRead;
+            Interval ExtentOnConsensus;
+            float AlignmentScore;
+            float AlignmentIdentity;
 
-    //
-    // Find better orientation, (fwd or RC) and add as such
-    //
-    ReadKey OrientAndAddRead(const std::string& readSequence,
-                             const PacBio::CCS::ConsensusSettings &settings, 
-                             const PoaAlignmentOptions& alnOptions = PoaAlignmentOptions(),
-                             float minScoreToAdd = 0);
+            PoaAlignmentSummary()
+                : ReverseComplementedRead{false}, ExtentOnRead(0, 0), ExtentOnConsensus(0, 0), AlignmentScore{0}, AlignmentIdentity{0}
+            {
+            }
+        };
 
-    //
-    // Walk the POA and get the optimal consensus path
-    //
-    std::shared_ptr<const PacBio::Poa::PoaConsensus> FindConsensus(
-        int minCoverage, const PacBio::CCS::ConsensusSettings &settings, std::vector<PoaAlignmentSummary>* summaries = NULL) const;
+        struct PoaAlignmentOptions
+        {
+            bool ClipBegin;
+            bool ClipEnd;
+        };
 
-    //
-    // Serialize the POA graph to std::string
-    //
-    std::string ToGraphViz(int flags = 0, const PacBio::Poa::PoaConsensus* pc = nullptr) const;
+        //
+        // Partial order aligner with parsimonious memory usage
+        //
+        class SparsePoa
+        {
+        public:
+            // ReadKey: Integer key representing
+            //  >= 0: a read in the POA graph
+            //    -1: read could not be inserted into POA graph
+            using ReadKey = int;
 
-    //
-    // Serialize the POA graph to a file
-    //
-    void WriteGraphVizFile(const std::string& filename, int flags = 0,
-                           const PacBio::Poa::PoaConsensus* pc = nullptr) const;
+        public:
+            SparsePoa();
+            ~SparsePoa();
 
-    void WriteGraphCsvFile(const std::string& filename) const;
+            //
+            // Add read, which must already have been oriented to be in the
+            // "forward" convention
+            //
+            ReadKey AddRead(const std::string &readSequence,
+                            const PacBio::CCS::ConsensusSettings &settings,
+                            const PoaAlignmentOptions &alnOptions = PoaAlignmentOptions(),
+                            float minScoreToAdd = 0);
 
-    //
-    // Clean up the POA graph, pruning minority paths, to speed up
-    // successive AddRead operations.
-    //
-    void PruneGraph(int minCoverage);
+            //
+            // Find better orientation, (fwd or RC) and add as such
+            //
+            ReadKey OrientAndAddRead(const std::string &readSequence,
+                                     const PacBio::CCS::ConsensusSettings &settings,
+                                     const PoaAlignmentOptions &alnOptions = PoaAlignmentOptions(),
+                                     float minScoreToAdd = 0);
 
-private:
-    void repCheck();
+            //
+            // Walk the POA and get the optimal consensus path
+            //
+            std::shared_ptr<const PacBio::Poa::PoaConsensus> FindConsensus(
+                int minCoverage, const PacBio::CCS::ConsensusSettings &settings, std::vector<PoaAlignmentSummary> *summaries = NULL) const;
 
-private:
-    using Path = std::vector<PoaGraph::Vertex>;
+            //
+            // Serialize the POA graph to std::string
+            //
+            std::string ToGraphViz(int flags = 0, const PacBio::Poa::PoaConsensus *pc = nullptr) const;
 
-    PoaGraph* graph_;
-    std::vector<Path> readPaths_;
-    std::vector<bool> reverseComplemented_;
-    SdpRangeFinder* rangeFinder_;
-};
+            //
+            // Serialize the POA graph to a file
+            //
+            void WriteGraphVizFile(const std::string &filename, int flags = 0,
+                                   const PacBio::Poa::PoaConsensus *pc = nullptr) const;
 
-}  // namespace Poa
-}  // namespace PacBio
+            void WriteGraphCsvFile(const std::string &filename) const;
+
+            //
+            // Clean up the POA graph, pruning minority paths, to speed up
+            // successive AddRead operations.
+            //
+            void PruneGraph(int minCoverage);
+
+        private:
+            void repCheck();
+
+        private:
+            using Path = std::vector<PoaGraph::Vertex>;
+
+            PoaGraph *graph_;
+            std::vector<Path> readPaths_;
+            std::vector<bool> reverseComplemented_;
+            SdpRangeFinder *rangeFinder_;
+        };
+
+    } // namespace Poa
+} // namespace PacBio

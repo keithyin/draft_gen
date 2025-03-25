@@ -492,14 +492,16 @@ dependencies = [
 
 [[package]]
 name = "draft_gen"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "clap",
  "crossbeam",
  "gskits",
  "lazy_static",
+ "libc",
  "num_cpus",
+ "rsedlib",
  "rust-htslib",
 ]
 
@@ -1362,6 +1364,15 @@ name = "regex-syntax"
 version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
+
+[[package]]
+name = "rsedlib"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "30732635468cc6664954259a985b7ebde8b1cab493f55148f0e56e9831a54a83"
+dependencies = [
+ "libc",
+]
 
 [[package]]
 name = "rust-htslib"

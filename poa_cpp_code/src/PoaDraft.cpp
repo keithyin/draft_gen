@@ -45,6 +45,7 @@ extern "C"
         int mismatch_score = -5;
         int insertion_score = -2;
         int deletion_score = -2;
+        int adjust_strand = 1;
     };
 
     struct Result
@@ -103,7 +104,16 @@ extern "C"
         for (int i = 0; i < nReads; i++)
         {
             std::string seq((reads + i)->seq);
-            SparsePoa::ReadKey key = poa.OrientAndAddRead(seq, consensus_settings);
+            SparsePoa::ReadKey key = -1;
+
+            if (settings->adjust_strand)
+            {
+                key = poa.OrientAndAddRead(seq, consensus_settings);
+            }
+            else
+            {
+                key = poa.AddRead(seq, consensus_settings);
+            }
 
             readKeys->emplace_back(key);
             if (key >= 0)
@@ -128,11 +138,12 @@ extern "C"
     {
         std::vector<SparsePoa::ReadKey> readKeys;
         std::vector<PoaAlignmentSummary> summaries;
-
+        // std::cerr << "PoaDraftGen" << std::endl;
         std::string consensus_seq = _PoaDraftGenCore(reads, num_sbr, &readKeys, &summaries, 1000000, setting);
         size_t n_passes = _ComputeNPassesForNoPolish(reads, num_sbr, readKeys, summaries, setting->min_identity);
 
-        char *consensus = new char[consensus_seq.size() + 1];
+        // char *consensus = new char[consensus_seq.size() + 1];
+        char *consensus = (char *)malloc(sizeof(char) * (consensus_seq.size() + 1));
         std::strcpy(consensus, consensus_seq.c_str());
         Result result;
         result.n_passes = n_passes;
